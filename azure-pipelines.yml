@@ -24,10 +24,10 @@ steps:
     verbose: false
 
 - task: Npm@1
-  displayName: 'Install gulp globally'
+  displayName: 'List installed npm packages'
   inputs:
     command: custom
-    customCommand: 'npm install --global gulp@4.0.2'
+    customCommand: 'ls'
     verbose: false
 
 - script: './node_modules/.bin/node-sass Tailspin.SpaceGame.Web/wwwroot --output Tailspin.SpaceGame.Web/wwwroot'
