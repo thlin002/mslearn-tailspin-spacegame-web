@@ -1,5 +1,61 @@
+trigger:
+- '*'
+
 pool:
-  name: Default
+  name: 'Default' # Replace Default with the name of your agent pool if you used a different pool
+
+variables:
+  buildConfiguration: 'Release'
+  wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
+  dotnetSdkVersion: '6.x'
 
 steps:
-- script: echo hello world
+- task: UseNode@1
+  inputs:
+    version: '17.x'
+
+- task: UseDotNet@2
+  displayName: 'Use .NET SDK $(dotnetSdkVersion)'
+  inputs:
+    packageType: sdk
+    version: '$(dotnetSdkVersion)'
+
+- task: Npm@1
+  displayName: 'Run npm install'
+  inputs:
+    verbose: false
+
+- task: Npm@1
+  displayName: 'List installed npm packages'
+  inputs:
+    command: custom
+    customCommand: 'ls'
+    verbose: false
+
+- script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
+  displayName: 'Compile Sass assets'
+
+- script: './node_modules/.bin/gulp'
+  displayName: 'Run gulp tasks'
+
+- script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
+  displayName: 'Write build info'
+  workingDirectory: $(wwwrootDir)
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore project dependencies'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+
+- template: templates/build.yml
+  parameters:
+    buildConfiguration: 'Debug'
+
+- template: templates/build.yml
+  parameters:
+    buildConfiguration: 'Release'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  condition: succeeded()
